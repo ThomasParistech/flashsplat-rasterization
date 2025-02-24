@@ -379,14 +379,19 @@ renderCUDA(
 			// and its exponential falloff from mean.
 			// Avoid numerical instabilities (see paper appendix). 
 			float alpha = min(0.99f, con_o.w * exp(power));
+
+			///// Add count /////
+			atomicAdd(&(used_count[obj_id * P + global_id]), 1.0);
+
 			if (alpha < 1.0f / 255.0f)
 				continue;
 			float test_T = T * (1 - alpha);
-			if (test_T < 0.0001f)
-			{
-				done = true;
-				continue;
-			}
+			///// Keep them all /////
+			// if (test_T < 0.0001f)
+			// {
+			// 	done = true;
+			// 	continue;
+			// }
 
 			// Eq. (3) from 3D Gaussian splatting paper.
 			for (int ch = 0; ch < CHANNELS; ch++)
@@ -395,7 +400,8 @@ renderCUDA(
 			D += depths[global_id] * alpha * T;
 
 			// used_count[obj_id * P + global_id] += 1;
-			atomicAdd(&(used_count[obj_id * P + global_id]), alpha * T);
+			// atomicAdd(&(used_count[obj_id * P + global_id]), alpha * T);
+			///// Skip and move above /////
 			T = test_T;
 
 			// Keep track of last range entry to update this
